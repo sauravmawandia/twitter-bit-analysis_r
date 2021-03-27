@@ -1,0 +1,142 @@
+title: "Project"
+author: "Saurav"
+date: "3/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Reading the data from The CSV files¶
+
+```{r setup}
+
+twitterBots <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/bots_data.csv", comment.char="#")
+twitterNonBots <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/nonbots_data.csv", comment.char="#")
+user <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/training_data_2_csv_UTF.csv", comment.char="#")
+ test <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/test_data_4_students.csv", comment.char="#")
+
+names(twitterBots)
+```
+
+## Cleaning Training Data and converting it to boolean & numeric values
+
+
+```{r cleaing}
+library(stringr)
+df=user
+df$favourites_count[df$favourites_count =='None'] <- 0
+df$favourites_count[is.na(df$favourites_count)] <- 0
+
+df$default_profile[df$default_profile =='None'] <- FALSE
+df$default_profile[is.na(df$default_profile)] <- FALSE
+
+
+df$default_profile_image[df$default_profile_image =='None'] <- FALSE
+df$default_profile_image[is.na(df$default_profile_image)] <- FALSE
+
+df$screen_name[str_detect(df$screen_name,'bot')] <- FALSE
+df$screen_name[is.na(df$screen_name)] <- FALSE
+
+
+df$name[str_detect(df$name,'bot')] <- FALSE
+df$name[is.na(df$name)] <- ''
+
+df$bot[str_detect(df$bot,'bot')] <- FALSE
+df$bot[is.na(df$bot)] <- FALSE
+
+
+library(lubridate)
+
+df$created_at[is.na(df$created_at)] <- '03/25/2021 16:03'
+df$created_at[df$created_at==''] <- NA
+df$created_at <-  sub("\"", "", df$created_at)
+df$created_at <- sub("\"", "", df$created_at)
+df$created_at <- parse_date_time(df$created_at, orders = c("mdy_hm","abdy_hms"))
+
+```
+##Calculating the status per day from the day account was created
+
+```{r check status}
+library(lubridate)
+
+df$created_at
+df$created_at=parse_date_time(df$created_at, orders = "ymd")
+df$created_at
+as.POSIXct(DateTime,tz=Sys.timezone())
+summary(df)
+```
+
+Cleaning Test data and doing the same work we did for Training data¶
+
+```{r clean test data}
+##TODO: 
+tf=test
+tf
+tf$favorites_count[tf$favorites_count =='None'] <- 0
+tf$favorites_count[is.na(tf$favorites_count)] <- 0
+
+tf$default_profile[tf$default_profile =='None'] <- FALSE
+tf$default_profile[tf$default_profile ==''] <- FALSE
+tf$default_profile[tf$default_profile =='FALSE'] <- FALSE
+tf$default_profile[tf$default_profile =='TRUE'] <- TRUE
+tf$default_profile[is.na(tf$default_profile)] <- FALSE
+
+
+tf$default_profile_image[tf$default_profile_image =='None'] <- FALSE
+tf$default_profile_image[tf$default_profile_image ==''] <- FALSE
+tf$default_profile_image[is.na(tf$default_profile_image)] <- FALSE
+tf$default_profile_image
+
+tf$verified[tf$verified=='NONE'] <- FALSE
+tf$verified[tf$verified==''] <- FALSE
+tf$verified[tf$verified=='TRUE'] <- TRUE
+tf$verified[tf$verified=='FALSE'] <- FALSE
+
+tf$followers_count[tf$followers_count=='NONE'] <- 0
+tf$followers_count[tf$followers_count==''] <- 0
+
+tf$friends_count[tf$friends_count=='NONE'] <- 0
+tf$friends_count[tf$friends_count==''] <- 0
+
+tf$statuses_count[tf$statuses_count=='NONE'] <- 0
+tf$statuses_count[tf$statuses_count==''] <- 0
+
+
+
+tf$screen_name[str_detect(tf$screen_name,'bot')] <- FALSE
+tf$screen_name[is.na(tf$screen_name)] <- FALSE
+
+
+tf$name[str_detect(tf$name,'bot')] <- FALSE
+tf$name[is.na(tf$name)] <- ''
+
+tf$description[str_detect(tf$description,'bot')] <- FALSE
+
+library(lubridate)
+tf$created_at[is.na(tf$created_at)] <- '03/25/2021 16:03'
+tf$created_at[tf$created_at==''] <- NA
+tf$created_at <-  sub("\"", "", tf$created_at)
+tf$created_at <- sub("\"", "", tf$created_at)
+tf$created_at <- parse_date_time(tf$created_at, orders = c("mdy_hm","abdy_hms"))
+
+tf$today <- Sys.Date()
+tf$today
+tf$created_at
+tf$created_at<-strptime(tf$created_at, format = "%Y-%m-%d")
+tf$daysTillNow <- as.numeric(difftime(tf$today, tf$created_at, units = "days"))
+tf$statusPerDay <- tf$statuses_count/tf$daysTillNow
+tf$statusPerDay
+
+
+
+```
+
+  
+
+
+##Splitting the data
+
+```{r splitting the data }
+```
