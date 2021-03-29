@@ -28,16 +28,6 @@ df=user
 df$favourites_count[df$favourites_count =='None'] <- 0
 df$favourites_count[is.na(df$favourites_count)] <- 0
 
-df$default_profile[df$default_profile =='None'] <- FALSE
-df$default_profile[is.na(df$default_profile)] <- FALSE
-
-
-df$default_profile_image[df$default_profile_image =='None'] <- FALSE
-df$default_profile_image[is.na(df$default_profile_image)] <- FALSE
-
-df$screen_name[str_detect(df$screen_name,'bot')] <- FALSE
-df$screen_name[is.na(df$screen_name)] <- FALSE
-
 
 df$name[str_detect(df$name,'bot')] <- FALSE
 df$name[is.na(df$name)] <- ''
@@ -47,6 +37,52 @@ df$bot[is.na(df$bot)] <- FALSE
 
 df$statuses_count[df$statuses_count=='NONE'] <- 0
 df$statuses_count[df$statuses_count==''] <- 0
+df$statuses_count[is.na(df$statuses_count)] <-0
+
+df$followers_count[is.na(df$followers_count)] <-0
+
+df$friends_count <- as.integer(df$friends_count)
+df$friends_count[is.na(df$friends_count)] <- 0
+
+df$verified[df$verified==''] <- FALSE
+df$verified[df$verified=='TRUE'] <- TRUE
+df$verified[df$verified=='FALSE'] <- FALSE
+
+df$favourites_count[df$favourites_count =='None'] <- 0
+
+df$favourites_count <-as.integer(df$favourites_count)
+df$favourites_count[is.na(df$favourites_count)] <- 0
+
+df$default_profile[df$default_profile =='None'] <- FALSE
+df$default_profile[df$default_profile ==''] <- FALSE
+df$default_profile[df$default_profile =='FALSE'] <- FALSE
+df$default_profile[df$default_profile =='False'] <- FALSE
+df$default_profile[df$default_profile =='TRUE'] <- TRUE
+df$default_profile[df$default_profile =='True'] <- TRUE
+df$default_profile[is.na(df$default_profile)] <- FALSE
+
+df$default_profile_image[df$default_profile_image =='None'] <- FALSE
+df$default_profile_image[df$default_profile_image ==''] <- FALSE
+df$default_profile_image[is.na(df$default_profile_image)] <- FALSE
+df$default_profile_image[df$default_profile_image =='True'] <- TRUE
+df$default_profile_image[df$default_profile_image =='False'] <- FALSE
+
+df$name[is.na(df$name)] <- ''
+df$name[str_detect(df$name,regex('bot',ignore_case = T))] <- FALSE
+df$name[df$name==""] <- FALSE
+df$name[df$name!="FALSE"] <- TRUE
+
+
+df$screen_name[is.na(df$screen_name)] <- ''
+df$screen_name[str_detect(df$screen_name,regex('bot',ignore_case = T))] <- FALSE
+df$screen_name[df$screen_name==""] <- FALSE
+df$screen_name[df$screen_name!="FALSE"] <- TRUE
+
+df$description[is.na(df$description)] <- ''
+df$description[str_detect(df$description,regex('bot',ignore_case = T))] <- FALSE
+df$description[df$description==""] <- FALSE
+df$description[df$description!="FALSE"] <- TRUE
+
 
 library(lubridate)
 df$created_at[is.na(df$created_at)] <- '2021-03-29 02:52:00'
@@ -62,39 +98,63 @@ df$today <- Sys.Date()
 df$created_at<-strptime(df$created_at, format = "%Y-%m-%d")
 df$daysTillNow <- as.numeric(difftime(df$today, df$created_at, units = "days"))
 df$statusPerDay <- as.numeric(df$statuses_count)/df$daysTillNow
+df$statusPerDay <-round(df$statusPerDay)
+
 ```
 
 Cleaning Test data and doing the same work we did for Training data¶
 
 ```{r clean test data}
 tf=test
+
 tf$favourites_count[tf$favourites_count =='None'] <- 0
 tf$favourites_count[is.na(tf$favourites_count)] <- 0
+
+tf$favourites_count <-as.integer(tf$favourites_count)
+
 
 tf$default_profile[tf$default_profile =='None'] <- FALSE
 tf$default_profile[tf$default_profile ==''] <- FALSE
 tf$default_profile[tf$default_profile =='FALSE'] <- FALSE
+tf$default_profile[tf$default_profile =='False'] <- FALSE
 tf$default_profile[tf$default_profile =='TRUE'] <- TRUE
+tf$default_profile[tf$default_profile =='True'] <- TRUE
 tf$default_profile[is.na(tf$default_profile)] <- FALSE
-
 
 tf$default_profile_image[tf$default_profile_image =='None'] <- FALSE
 tf$default_profile_image[tf$default_profile_image ==''] <- FALSE
 tf$default_profile_image[is.na(tf$default_profile_image)] <- FALSE
+tf$default_profile_image[tf$default_profile_image =='True'] <- TRUE
+tf$default_profile_image[tf$default_profile_image =='False'] <- FALSE
 
-tf$verified[tf$verified=='NONE'] <- FALSE
-tf$verified[tf$verified==''] <- FALSE
-tf$verified[tf$verified=='TRUE'] <- TRUE
-tf$verified[tf$verified=='FALSE'] <- FALSE
+tf$name[is.na(tf$name)] <- ''
+tf$name[str_detect(tf$name,regex('bot',ignore_case = T))] <- FALSE
+tf$name[tf$name==""] <- FALSE
+tf$name[tf$name!="FALSE"] <- TRUE
 
-tf$followers_count[tf$followers_count=='NONE'] <- 0
-tf$followers_count[tf$followers_count==''] <- 0
 
-tf$friends_count[tf$friends_count=='NONE'] <- 0
-tf$friends_count[tf$friends_count==''] <- 0
+tf$screen_name[is.na(tf$screen_name)] <- ''
+tf$screen_name[str_detect(tf$screen_name,regex('bot',ignore_case = T))] <- FALSE
+tf$screen_name[tf$screen_name==""] <- FALSE
+tf$screen_name[tf$screen_name!="FALSE"] <- TRUE
+
+tf$description[is.na(tf$description)] <- ''
+tf$description[str_detect(tf$description,regex('bot',ignore_case = T))] <- FALSE
+tf$description[tf$description==""] <- FALSE
+tf$description[tf$description!="FALSE"] <- TRUE
 
 tf$statuses_count[tf$statuses_count=='NONE'] <- 0
 tf$statuses_count[tf$statuses_count==''] <- 0
+tf$statuses_count[is.na(tf$statuses_count)] <-0
+
+tf$followers_count[is.na(tf$followers_count)] <-0
+
+tf$friends_count <- as.integer(tf$friends_count)
+tf$friends_count[is.na(tf$friends_count)] <- 0
+
+tf$verified[tf$verified==''] <- FALSE
+tf$verified[tf$verified=='TRUE'] <- TRUE
+tf$verified[tf$verified=='FALSE'] <- FALSE
 
 
 
@@ -117,6 +177,8 @@ tf$created_at<-strptime(tf$created_at, format = "%Y-%m-%d")
 tf$daysTillNow <- as.numeric(difftime(tf$today, tf$created_at, units = "days"))
 tf$statusPerDay <- as.numeric(tf$statuses_count)/tf$daysTillNow
 tf$statusPerDay[is.na(tf$statusPerDay)] <- 0
+
+
 
 
 ```
@@ -148,9 +210,18 @@ test_set = subset(df, split == FALSE)
 ##mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay + verified + favourites_count  + description
  ##              + default_profile_image + default_profile + screen_name + name, data = training_set, family = "binomial")
 
+logit_twitter <- glm(bot ~  friends_count+ followers_count + statusPerDay + verified + favourites_count + name + screen_name + description, data = training_set, family = "binomial")
+summary(logit_twitter)
 
-mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay , data = training_set, family = "binomial")
-summary(mylogit)
+confint(logit_twitter)
+install.packages("aod")
+library("aod")
+wald.test(b = coef(logit_twitter), Sigma = vcov(logit_twitter), Terms = 4:6)
+
+
+exp(coef(logit_twitter))
+
+exp(cbind(OR = coef(logit_twitter), confint(logit_twitter)))
 
 
 ```
