@@ -17,6 +17,7 @@ twitterNonBots <- read.csv("/Users/saurav/git/data/nonbots_data.csv", comment.ch
 user <- read.csv("/Users/saurav/git/data/training_data_2_csv_UTF.csv", comment.char="#")
 test <- read.csv("/Users/saurav/git/data/test_data_4_students.csv", comment.char="#")
 
+
 ```
 
 ## Cleaning Training Data and converting it to boolean & numeric values
@@ -28,9 +29,6 @@ df=user
 df$favourites_count[df$favourites_count =='None'] <- 0
 df$favourites_count[is.na(df$favourites_count)] <- 0
 
-
-df$name[str_detect(df$name,'bot')] <- FALSE
-df$name[is.na(df$name)] <- ''
 
 df$bot[str_detect(df$bot,'bot')] <- FALSE
 df$bot[is.na(df$bot)] <- FALSE
@@ -207,14 +205,12 @@ test_set = subset(df, split == FALSE)
 ##Fitting the training data and predicting test data contained in training data and the test data from using logistic regression
 ```{r fitting model}
 
-##mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay + verified + favourites_count  + description
- ##              + default_profile_image + default_profile + screen_name + name, data = training_set, family = "binomial")
-
-logit_twitter <- glm(bot ~  friends_count+ followers_count + statusPerDay + verified + favourites_count + name + screen_name + description, data = training_set, family = "binomial")
+logit_twitter <- glm(bot ~  friends_count+ followers_count + statusPerDay + verified + favourites_count + name + screen_name + description,
+                     data = training_set, family = binomial(link = "logit"))
 summary(logit_twitter)
 
 confint(logit_twitter)
-install.packages("aod")
+#install.packages("aod")
 library("aod")
 wald.test(b = coef(logit_twitter), Sigma = vcov(logit_twitter), Terms = 4:6)
 
@@ -225,4 +221,10 @@ exp(cbind(OR = coef(logit_twitter), confint(logit_twitter)))
 
 
 ```
+##predicting 
+```{r predict}
 
+test_set$botP <- predict(logit_twitter, newdata = test_set, type = "response")
+test_set
+
+```
