@@ -224,7 +224,8 @@ exp(cbind(OR = coef(logit_twitter), confint(logit_twitter)))
 ##predicting 
 ```{r predict}
 
-test_set$botP <- predict(logit_twitter, newdata = test_set, type = "response")
+test_set$botP <- predict(logit_twitter, newdata = test_set, interval = "prediction")
+
 test_set
 
 ```
