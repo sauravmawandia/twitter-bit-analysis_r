@@ -12,10 +12,10 @@ Reading the data from The CSV files¶
 
 ```{r setup}
 
-twitterBots <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/bots_data.csv", comment.char="#")
-twitterNonBots <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/nonbots_data.csv", comment.char="#")
-user <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/training_data_2_csv_UTF.csv", comment.char="#")
- test <- read.csv("~/Documents/502/twitter-bot-analysis-ML-master/data/test_data_4_students.csv", comment.char="#")
+twitterBots <- read.csv("/Users/saurav/git/data/bots_data.csv", comment.char="#")
+twitterNonBots <- read.csv("/Users/saurav/git/data/nonbots_data.csv", comment.char="#")
+user <- read.csv("/Users/saurav/git/data/training_data_2_csv_UTF.csv", comment.char="#")
+test <- read.csv("/Users/saurav/git/data/test_data_4_students.csv", comment.char="#")
 
 names(twitterBots)
 ```
@@ -46,26 +46,27 @@ df$name[is.na(df$name)] <- ''
 df$bot[str_detect(df$bot,'bot')] <- FALSE
 df$bot[is.na(df$bot)] <- FALSE
 
+df$statuses_count[tf$statuses_count=='NONE'] <- 0
+df$statuses_count[tf$statuses_count==''] <- 0
 
 library(lubridate)
-
-df$created_at[is.na(df$created_at)] <- '03/25/2021 16:03'
-df$created_at[df$created_at==''] <- NA
-df$created_at <-  sub("\"", "", df$created_at)
-df$created_at <- sub("\"", "", df$created_at)
-df$created_at <- parse_date_time(df$created_at, orders = c("mdy_hm","abdy_hms"))
-
+df$created_at[is.na(df$created_at)] <- '2021-03-29 02:52:00'
+df$created_at[df$created_at ==''] <- '2021-03-29 02:52:00'
+df$created_at <-  gsub("\\+00:00", "", df$created_at)
+df$created_at=parse_date_time(df$created_at, orders = "ymd_HMS")
 ```
 ##Calculating the status per day from the day account was created
 
 ```{r check status}
-library(lubridate)
 
+df$today <- Sys.Date()
+df$today
 df$created_at
-df$created_at=parse_date_time(df$created_at, orders = "ymd")
-df$created_at
-as.POSIXct(DateTime,tz=Sys.timezone())
-summary(df)
+df$created_at<-strptime(df$created_at, format = "%Y-%m-%d")
+df$daysTillNow <- as.numeric(difftime(df$today, df$created_at, units = "days"))
+df$statusPerDay <- as.numeric(df$statuses_count)/df$daysTillNow
+df$statuses_count
+df$statusPerDay
 ```
 
 Cleaning Test data and doing the same work we did for Training data¶
@@ -74,8 +75,8 @@ Cleaning Test data and doing the same work we did for Training data¶
 ##TODO: 
 tf=test
 tf
-tf$favorites_count[tf$favorites_count =='None'] <- 0
-tf$favorites_count[is.na(tf$favorites_count)] <- 0
+tf$favourites_count[tf$favourites_count =='None'] <- 0
+tf$favourites_count[is.na(tf$favourites_count)] <- 0
 
 tf$default_profile[tf$default_profile =='None'] <- FALSE
 tf$default_profile[tf$default_profile ==''] <- FALSE
@@ -114,20 +115,19 @@ tf$name[is.na(tf$name)] <- ''
 
 tf$description[str_detect(tf$description,'bot')] <- FALSE
 
-library(lubridate)
-tf$created_at[is.na(tf$created_at)] <- '03/25/2021 16:03'
-tf$created_at[tf$created_at==''] <- NA
-tf$created_at <-  sub("\"", "", tf$created_at)
-tf$created_at <- sub("\"", "", tf$created_at)
-tf$created_at <- parse_date_time(tf$created_at, orders = c("mdy_hm","abdy_hms"))
+tf$created_at[is.na(tf$created_at)] <- '2021-03-29 02:52:00'
+tf$created_at[tf$created_at ==''] <- '2021-03-29 02:52:00'
+tf$created_at <-  gsub("\\+00:00", "", tf$created_at)
+tf$created_at=parse_date_time(tf$created_at, orders = "ymd_HMS")
 
 tf$today <- Sys.Date()
 tf$today
 tf$created_at
 tf$created_at<-strptime(tf$created_at, format = "%Y-%m-%d")
 tf$daysTillNow <- as.numeric(difftime(tf$today, tf$created_at, units = "days"))
-tf$statusPerDay <- tf$statuses_count/tf$daysTillNow
-tf$statusPerDay
+tf$statusPerDay <- as.numeric(tf$statuses_count)/tf$daysTillNow
+tf$statusPerDay[is.na(tf$statusPerDay)] <- 0
+
 
 
 
@@ -139,4 +139,29 @@ tf$statusPerDay
 ##Splitting the data
 
 ```{r splitting the data }
+#install.packages('caTools')
+library(caTools)
+#We Split the sample data in the ratio of 70:30
+
+split = sample.split(df$bot,
+                      SplitRatio = .70)
+
+#70% of sample data includes the training set and rest 30% is test set
+training_set = subset(df, split == TRUE)
+test_set = subset(df, split == FALSE)
 ```
+
+
+
+
+##Fitting the training data and predicting test data contained in training data and the test data from using logistic regression
+```{r fitting model}
+
+mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay + verified + favourites_count  + description
+               + default_profile_image + default_profile + screen_name + name, data = training_set, family = "binomial")
+
+summary(mylogit)
+
+
+```
+
