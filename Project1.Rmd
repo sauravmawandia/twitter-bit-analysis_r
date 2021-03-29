@@ -17,7 +17,6 @@ twitterNonBots <- read.csv("/Users/saurav/git/data/nonbots_data.csv", comment.ch
 user <- read.csv("/Users/saurav/git/data/training_data_2_csv_UTF.csv", comment.char="#")
 test <- read.csv("/Users/saurav/git/data/test_data_4_students.csv", comment.char="#")
 
-names(twitterBots)
 ```
 
 ## Cleaning Training Data and converting it to boolean & numeric values
@@ -46,8 +45,8 @@ df$name[is.na(df$name)] <- ''
 df$bot[str_detect(df$bot,'bot')] <- FALSE
 df$bot[is.na(df$bot)] <- FALSE
 
-df$statuses_count[tf$statuses_count=='NONE'] <- 0
-df$statuses_count[tf$statuses_count==''] <- 0
+df$statuses_count[df$statuses_count=='NONE'] <- 0
+df$statuses_count[df$statuses_count==''] <- 0
 
 library(lubridate)
 df$created_at[is.na(df$created_at)] <- '2021-03-29 02:52:00'
@@ -60,21 +59,15 @@ df$created_at=parse_date_time(df$created_at, orders = "ymd_HMS")
 ```{r check status}
 
 df$today <- Sys.Date()
-df$today
-df$created_at
 df$created_at<-strptime(df$created_at, format = "%Y-%m-%d")
 df$daysTillNow <- as.numeric(difftime(df$today, df$created_at, units = "days"))
 df$statusPerDay <- as.numeric(df$statuses_count)/df$daysTillNow
-df$statuses_count
-df$statusPerDay
 ```
 
 Cleaning Test data and doing the same work we did for Training data¶
 
 ```{r clean test data}
-##TODO: 
 tf=test
-tf
 tf$favourites_count[tf$favourites_count =='None'] <- 0
 tf$favourites_count[is.na(tf$favourites_count)] <- 0
 
@@ -88,7 +81,6 @@ tf$default_profile[is.na(tf$default_profile)] <- FALSE
 tf$default_profile_image[tf$default_profile_image =='None'] <- FALSE
 tf$default_profile_image[tf$default_profile_image ==''] <- FALSE
 tf$default_profile_image[is.na(tf$default_profile_image)] <- FALSE
-tf$default_profile_image
 
 tf$verified[tf$verified=='NONE'] <- FALSE
 tf$verified[tf$verified==''] <- FALSE
@@ -121,14 +113,10 @@ tf$created_at <-  gsub("\\+00:00", "", tf$created_at)
 tf$created_at=parse_date_time(tf$created_at, orders = "ymd_HMS")
 
 tf$today <- Sys.Date()
-tf$today
-tf$created_at
 tf$created_at<-strptime(tf$created_at, format = "%Y-%m-%d")
 tf$daysTillNow <- as.numeric(difftime(tf$today, tf$created_at, units = "days"))
 tf$statusPerDay <- as.numeric(tf$statuses_count)/tf$daysTillNow
 tf$statusPerDay[is.na(tf$statusPerDay)] <- 0
-
-
 
 
 ```
@@ -157,9 +145,11 @@ test_set = subset(df, split == FALSE)
 ##Fitting the training data and predicting test data contained in training data and the test data from using logistic regression
 ```{r fitting model}
 
-mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay + verified + favourites_count  + description
-               + default_profile_image + default_profile + screen_name + name, data = training_set, family = "binomial")
+##mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay + verified + favourites_count  + description
+ ##              + default_profile_image + default_profile + screen_name + name, data = training_set, family = "binomial")
 
+
+mylogit <- glm(bot ~ friends_count + followers_count + statusPerDay , data = training_set, family = "binomial")
 summary(mylogit)
 
 
