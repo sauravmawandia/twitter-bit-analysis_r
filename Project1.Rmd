@@ -10,7 +10,26 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Reading the data from The CSV files¶
 
-```{r setup}
+```{r load}
+library(dplyr)
+
+# and visualization
+library(tidyverse)
+library(tidyr)
+
+  
+# package to compute
+# cross - validation methods
+#install.packages("caret")
+library(caret)
+library(caTools)
+library("aod")
+library(pROC)
+
+
+
+
+
 
 twitterBots <- read.csv("/Users/saurav/git/data/bots_data.csv", comment.char="#")
 twitterNonBots <- read.csv("/Users/saurav/git/data/nonbots_data.csv", comment.char="#")
@@ -26,8 +45,6 @@ test <- read.csv("/Users/saurav/git/data/test_data_4_students.csv", comment.char
 ```{r cleaing}
 library(stringr)
 df=user
-df$favourites_count[df$favourites_count =='None'] <- 0
-df$favourites_count[is.na(df$favourites_count)] <- 0
 
 
 df$bot[str_detect(df$bot,'bot')] <- FALSE
@@ -36,6 +53,7 @@ df$bot[is.na(df$bot)] <- FALSE
 df$statuses_count[df$statuses_count=='NONE'] <- 0
 df$statuses_count[df$statuses_count==''] <- 0
 df$statuses_count[is.na(df$statuses_count)] <-0
+df$statuses_count <- as.integer(df$statuses_count)
 
 df$followers_count[is.na(df$followers_count)] <-0
 
@@ -45,11 +63,16 @@ df$friends_count[is.na(df$friends_count)] <- 0
 df$verified[df$verified==''] <- FALSE
 df$verified[df$verified=='TRUE'] <- TRUE
 df$verified[df$verified=='FALSE'] <- FALSE
+df$verified[df$verified=='False'] <- FALSE
+df$verified[df$verified=='True'] <- TRUE
+
+
 
 df$favourites_count[df$favourites_count =='None'] <- 0
 
 df$favourites_count <-as.integer(df$favourites_count)
 df$favourites_count[is.na(df$favourites_count)] <- 0
+
 
 df$default_profile[df$default_profile =='None'] <- FALSE
 df$default_profile[df$default_profile ==''] <- FALSE
@@ -95,91 +118,37 @@ df$created_at=parse_date_time(df$created_at, orders = "ymd_HMS")
 df$today <- Sys.Date()
 df$created_at<-strptime(df$created_at, format = "%Y-%m-%d")
 df$daysTillNow <- as.numeric(difftime(df$today, df$created_at, units = "days"))
-df$statusPerDay <- as.numeric(df$statuses_count)/df$daysTillNow
+df$statusPerDay <- as.integer(df$statuses_count)/df$daysTillNow
+
 df$statusPerDay <-round(df$statusPerDay)
-
-```
-
-Cleaning Test data and doing the same work we did for Training data¶
-
-```{r clean test data}
-tf=test
-
-tf$favourites_count[tf$favourites_count =='None'] <- 0
-tf$favourites_count[is.na(tf$favourites_count)] <- 0
-
-tf$favourites_count <-as.integer(tf$favourites_count)
-
-
-tf$default_profile[tf$default_profile =='None'] <- FALSE
-tf$default_profile[tf$default_profile ==''] <- FALSE
-tf$default_profile[tf$default_profile =='FALSE'] <- FALSE
-tf$default_profile[tf$default_profile =='False'] <- FALSE
-tf$default_profile[tf$default_profile =='TRUE'] <- TRUE
-tf$default_profile[tf$default_profile =='True'] <- TRUE
-tf$default_profile[is.na(tf$default_profile)] <- FALSE
-
-tf$default_profile_image[tf$default_profile_image =='None'] <- FALSE
-tf$default_profile_image[tf$default_profile_image ==''] <- FALSE
-tf$default_profile_image[is.na(tf$default_profile_image)] <- FALSE
-tf$default_profile_image[tf$default_profile_image =='True'] <- TRUE
-tf$default_profile_image[tf$default_profile_image =='False'] <- FALSE
-
-tf$name[is.na(tf$name)] <- ''
-tf$name[str_detect(tf$name,regex('bot',ignore_case = T))] <- FALSE
-tf$name[tf$name==""] <- FALSE
-tf$name[tf$name!="FALSE"] <- TRUE
-
-
-tf$screen_name[is.na(tf$screen_name)] <- ''
-tf$screen_name[str_detect(tf$screen_name,regex('bot',ignore_case = T))] <- FALSE
-tf$screen_name[tf$screen_name==""] <- FALSE
-tf$screen_name[tf$screen_name!="FALSE"] <- TRUE
-
-tf$description[is.na(tf$description)] <- ''
-tf$description[str_detect(tf$description,regex('bot',ignore_case = T))] <- FALSE
-tf$description[tf$description==""] <- FALSE
-tf$description[tf$description!="FALSE"] <- TRUE
-
-tf$statuses_count[tf$statuses_count=='NONE'] <- 0
-tf$statuses_count[tf$statuses_count==''] <- 0
-tf$statuses_count[is.na(tf$statuses_count)] <-0
-
-tf$followers_count[is.na(tf$followers_count)] <-0
-
-tf$friends_count <- as.integer(tf$friends_count)
-tf$friends_count[is.na(tf$friends_count)] <- 0
-
-tf$verified[tf$verified==''] <- FALSE
-tf$verified[tf$verified=='TRUE'] <- TRUE
-tf$verified[tf$verified=='FALSE'] <- FALSE
+ df<-drop_na(df)
 
 
 
-tf$screen_name[str_detect(tf$screen_name,'bot')] <- FALSE
-tf$screen_name[is.na(tf$screen_name)] <- FALSE
 
+df <- within(df, favourites_count_q <- as.integer(cut(favourites_count, quantile(favourites_count,probs = seq(.2, 1, by = .2)), include.lowest=TRUE)))
+df <- within(df, friends_count_q <- as.integer(cut(friends_count, quantile(friends_count,probs = seq(.1, 1, by = .1)), include.lowest=TRUE)))
 
-tf$name[str_detect(tf$name,'bot')] <- FALSE
-tf$name[is.na(tf$name)] <- ''
+df <- within(df, statusPerDay_q <- as.integer(cut(statusPerDay, quantile(statusPerDay,probs = seq(.25, 1, by = .25)), include.lowest=TRUE)))
 
-tf$description[str_detect(tf$description,'bot')] <- FALSE
+df <- within(df, followers_count_q <- as.integer(cut(followers_count, quantile(followers_count,probs = seq(.1, 1, by = .1)), include.lowest=TRUE)))
 
-tf$created_at[is.na(tf$created_at)] <- '2021-03-29 02:52:00'
-tf$created_at[tf$created_at ==''] <- '2021-03-29 02:52:00'
-tf$created_at <-  gsub("\\+00:00", "", tf$created_at)
-tf$created_at=parse_date_time(tf$created_at, orders = "ymd_HMS")
+df <- within(df, statuses_count_q <- as.integer(cut(statuses_count, quantile(statuses_count,probs = seq(.1, 1, by = .1)), include.lowest=TRUE)))
 
-tf$today <- Sys.Date()
-tf$created_at<-strptime(tf$created_at, format = "%Y-%m-%d")
-tf$daysTillNow <- as.numeric(difftime(tf$today, tf$created_at, units = "days"))
-tf$statusPerDay <- as.numeric(tf$statuses_count)/tf$daysTillNow
-tf$statusPerDay[is.na(tf$statusPerDay)] <- 0
+df$favourites_count_q[is.na(df$favourites_count_q)] <- 0
+df$friends_count_q[is.na(df$friends_count_q)] <- 0
 
+df$statusPerDay_q[is.na(df$statusPerDay_q)] <- 0
+
+df$followers_count_q[is.na(df$followers_count_q)] <- 0
+
+df$statuses_count_q[is.na(df$statuses_count_q)] <- 0
 
 
 
 ```
+
+
 
   
 
@@ -188,7 +157,7 @@ tf$statusPerDay[is.na(tf$statusPerDay)] <- 0
 
 ```{r splitting the data }
 #install.packages('caTools')
-library(caTools)
+
 #We Split the sample data in the ratio of 70:30
 
 split = sample.split(df$bot,
@@ -205,13 +174,28 @@ test_set = subset(df, split == FALSE)
 ##Fitting the training data and predicting test data contained in training data and the test data from using logistic regression
 ```{r fitting model}
 
-logit_twitter <- glm(bot ~  friends_count+ followers_count + statusPerDay + verified + favourites_count + name + screen_name + description,
+summary(df)
+
+
+training_set$bot <-factor(training_set$bot)
+logit_twitter <- glm(bot ~  favourites_count_q+ friends_count_q +statusPerDay_q +followers_count_q +   verified  + name + screen_name + description,
                      data = training_set, family = binomial(link = "logit"))
+
 summary(logit_twitter)
 
+                             
+
+
+
+
+```
+
+
+
+
+```{r glm}
 confint(logit_twitter)
-#install.packages("aod")
-library("aod")
+
 wald.test(b = coef(logit_twitter), Sigma = vcov(logit_twitter), Terms = 4:6)
 
 
@@ -223,9 +207,25 @@ exp(cbind(OR = coef(logit_twitter), confint(logit_twitter)))
 ```
 ##predicting 
 ```{r predict}
+ 
+# package to perform data manipulation
+logit_twitter.pred <-predict(logit_twitter, test_set, type="response")
 
-test_set$botP <- predict(logit_twitter, newdata = test_set, interval = "prediction")
+logit_twitter.pred <- ifelse(logit_twitter.pred > .50, 1, 0)
 
-test_set
+data.frame( R2 = R2(logit_twitter.pred, test_set$bot),
+            RMSE = RMSE(logit_twitter.pred, test_set$bot),
+            MAE = MAE(logit_twitter.pred, test_set$bot))
+
+attach(test_set)
+table(logit_twitter.pred,bot)
+
+mean(logit_twitter.pred == bot)
+
+#install.packages("proc")
+library(pROC)
+
+twitterBots <- roc(test_set$bot, logit_twitter.pred)
+auc(twitterBots)
 
 ```
